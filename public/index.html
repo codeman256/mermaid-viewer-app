@@ -220,7 +220,7 @@
       <button id="zoom-reset" type="button">100%</button>
       <button id="zoom-in" type="button">+</button>
       <button id="fit-screen" type="button">Fit</button>
-      <button id="fit-width" type="button">Go to Beginning</button>
+      <button id="go-start" type="button">Go to Start</button>
       <button id="share-btn" type="button" disabled>Share</button>
       <span id="zoom-label">100%</span>
     </div>
@@ -239,7 +239,7 @@
   const zoomInBtn = document.getElementById('zoom-in');
   const fitScreenBtn = document.getElementById('fit-screen');
   const themeToggleBtn = document.getElementById('theme-toggle');
-  const fitWidthBtn = document.getElementById('fit-width');
+  const goToStartBtn = document.getElementById('go-start');
   const zoomLabel = document.getElementById('zoom-label');
   const themeStorageKey = 'mermaid-viewer-theme';
   let renderCount = 0;
@@ -444,7 +444,7 @@
   // and anchor to the top, so the reader starts at the top and pans down.
   // Wide/short diagrams (LR-style flowcharts) fit to the container's height
   // and anchor to the left, so the reader starts at the left and pans right.
-  function fitWidth() {
+  function goToStart() {
     if (!viewport) return;
     const svg = viewport.querySelector('svg');
     if (!svg) return;
@@ -573,7 +573,7 @@
   });
 
   fitScreenBtn.addEventListener('click', fitToScreen);
-  fitWidthBtn.addEventListener('click', fitWidth);
+  goToStartBtn.addEventListener('click', goToStart);
 
   // Only needed if the app runs behind a reverse proxy under a different
   // public hostname than Node sees — lets Share always emit that canonical
