@@ -82,19 +82,48 @@ app.get('/api/events', (req, res) => {
   });
 });
 
+// Recursively find .mmd files under `dir`, returning paths relative to
+// DIAGRAMS_DIR using forward slashes (so subfolders are supported).
+function listMmdFiles(dir, base = '') {
+  let results = [];
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return results;
+  }
+  for (const entry of entries) {
+    const relPath = base ? `${base}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      results = results.concat(listMmdFiles(path.join(dir, entry.name), relPath));
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.mmd')) {
+      results.push(relPath);
+    }
+  }
+  return results;
+}
+
 // ---------------- File listing / serving ----------------
 app.get('/api/list', (req, res) => {
-  fs.readdir(DIAGRAMS_DIR, (err, files) => {
-    if (err) return res.status(500).json({ error: 'Could not read diagrams folder' });
-    res.json(files.filter((f) => f.toLowerCase().endsWith('.mmd')).sort());
-  });
+  try {
+    res.json(listMmdFiles(DIAGRAMS_DIR).sort());
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read diagrams folder' });
+  }
 });
 
-app.get('/api/file/:name', (req, res) => {
-  const safeName = path.basename(req.params.name); // prevent path traversal
-  if (!safeName.toLowerCase().endsWith('.mmd')) return res.status(400).send('Invalid file');
-  const filePath = path.join(DIAGRAMS_DIR, safeName);
-  
+app.get('/api/file', (req, res) => {
+  const requested = req.query.path;
+  if (typeof requested !== 'string' || !requested.toLowerCase().endsWith('.mmd')) {
+    return res.status(400).send('Invalid file');
+  }
+  const diagramsRoot = path.resolve(DIAGRAMS_DIR);
+  const filePath = path.resolve(diagramsRoot, requested);
+  // Prevent path traversal outside DIAGRAMS_DIR (e.g. "../../secret.mmd")
+  if (filePath !== diagramsRoot && !filePath.startsWith(diagramsRoot + path.sep)) {
+    return res.status(400).send('Invalid file');
+  }
+
   // Read as binary buffer to detect and handle various encodings
   fs.readFile(filePath, (err, buffer) => {
     if (err) return res.status(404).send('File not found');
@@ -126,11 +155,24 @@ app.get('/api/file/:name', (req, res) => {
 app.get('/healthz', (req, res) => res.send('ok'));
 
 // ---------------- Watch folder, notify connected browsers ----------------
-const watcher = chokidar.watch(DIAGRAMS_DIR, { ignoreInitial: true, depth: 2 });
+// Debounced so a `git pull` touching many files at once results in a single
+// reload notification instead of one per file.
+let broadcastTimer = null;
+function scheduleFilesChangedBroadcast() {
+  if (broadcastTimer) clearTimeout(broadcastTimer);
+  broadcastTimer = setTimeout(() => {
+    broadcastTimer = null;
+    broadcast('files-changed');
+  }, 400);
+}
+
+const watcher = chokidar.watch(DIAGRAMS_DIR, { ignoreInitial: true });
 watcher
-  .on('add', () => broadcast('files-changed'))
-  .on('unlink', () => broadcast('files-changed'))
-  .on('change', () => broadcast('files-changed'));
+  .on('add', scheduleFilesChangedBroadcast)
+  .on('unlink', scheduleFilesChangedBroadcast)
+  .on('change', scheduleFilesChangedBroadcast)
+  .on('addDir', scheduleFilesChangedBroadcast)
+  .on('unlinkDir', scheduleFilesChangedBroadcast);
 
 // ---------------- Auto git pull on a timer ----------------
 function pullRepo() {
