@@ -1,7 +1,7 @@
 # Small, slim image with Node + git (git is needed for the auto-pull feature)
 FROM node:20-alpine
 
-RUN apk add --no-cache git openssh-client
+RUN apk add --no-cache git openssh-client wget
 
 WORKDIR /app
 

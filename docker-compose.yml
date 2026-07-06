@@ -25,10 +25,10 @@ services:
       # How often to auto git-pull, in milliseconds. 300000 = 5 minutes.
       GIT_PULL_INTERVAL_MS: "300000"
 
-    volumes:
+    # volumes:
       # Persists the cloned repo across container restarts/rebuilds so it
       # doesn't need to re-clone every time.
-      - ./data/diagrams-repo:/app/diagrams-repo
+      # - ./data/diagrams-repo:/app/diagrams-repo
 
       # Uncomment if you need SSH auth for a private repo (git@ URL):
       # - ~/.ssh:/root/.ssh:ro
