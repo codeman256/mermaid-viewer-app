@@ -1,0 +1,37 @@
+# This file lives in the APP repo (the code for this website).
+# GIT_REPO_URL below points at your separate DIAGRAMS repo — the two are
+# unrelated to each other; only the diagrams one gets auto git-pulled at runtime.
+
+services:
+  mermaid-viewer:
+    build: .
+    container_name: mermaid-viewer
+    restart: unless-stopped
+
+    ports:
+      # host:container — change the host side if 3000 is taken, or remove
+      # this entirely if your reverse proxy talks to the Docker network directly.
+      - "3000:3000"
+
+    environment:
+      # Auto-clone this on first run if diagrams-repo is empty.
+      # Use an HTTPS URL with a token for private repos (see README below),
+      # or an SSH URL if you mount your SSH key (see volumes below).
+      GIT_REPO_URL: "https://github.com/your-org/your-diagrams-repo.git"
+
+      # Where inside the repo the .mmd files live. "." = repo root.
+      DIAGRAMS_SUBDIR: "."
+
+      # How often to auto git-pull, in milliseconds. 300000 = 5 minutes.
+      GIT_PULL_INTERVAL_MS: "300000"
+
+    volumes:
+      # Persists the cloned repo across container restarts/rebuilds so it
+      # doesn't need to re-clone every time.
+      - ./data/diagrams-repo:/app/diagrams-repo
+
+      # Uncomment if you need SSH auth for a private repo (git@ URL):
+      # - ~/.ssh:/root/.ssh:ro
+
+    # No auth here on purpose — this assumes your reverse proxy in front of
+    # this container is the one handling authentication.

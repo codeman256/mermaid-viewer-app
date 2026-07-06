@@ -1,0 +1,14 @@
+{
+  "name": "mermaid-viewer",
+  "version": "1.0.0",
+  "description": "Simple mermaid diagram viewer with live file refresh and automatic git pull",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
