@@ -94,9 +94,31 @@ app.get('/api/file/:name', (req, res) => {
   const safeName = path.basename(req.params.name); // prevent path traversal
   if (!safeName.toLowerCase().endsWith('.mmd')) return res.status(400).send('Invalid file');
   const filePath = path.join(DIAGRAMS_DIR, safeName);
-  fs.readFile(filePath, 'utf8', (err, data) => {
+  
+  // Read as binary buffer to detect and handle various encodings
+  fs.readFile(filePath, (err, buffer) => {
     if (err) return res.status(404).send('File not found');
-    res.type('text/plain').send(data);
+    
+    let text = '';
+    
+    // Check for UTF-16 LE BOM (FF FE)
+    if (buffer[0] === 0xFF && buffer[1] === 0xFE) {
+      text = buffer.toString('utf16le', 2); // skip BOM
+    }
+    // Check for UTF-16 BE BOM (FE FF)
+    else if (buffer[0] === 0xFE && buffer[1] === 0xFF) {
+      text = buffer.toString('utf16be', 2); // skip BOM
+    }
+    // Check for UTF-8 BOM (EF BB BF)
+    else if (buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+      text = buffer.toString('utf8', 3); // skip BOM
+    }
+    // Try UTF-8 (most common)
+    else {
+      text = buffer.toString('utf8');
+    }
+    
+    res.type('text/plain').send(text);
   });
 });
 

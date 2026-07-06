@@ -7,7 +7,13 @@ WORKDIR /app
 
 # Install dependencies first so this layer is cached unless package.json changes
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev --no-audit --no-fund
+# Use `npm ci` when a lockfile exists for reproducible installs,
+# otherwise fall back to `npm install` so builds without a lockfile still work.
+RUN if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
+      npm ci --omit=dev --no-audit --no-fund; \
+    else \
+      npm install --omit=dev --no-audit --no-fund; \
+    fi
 
 # App code
 COPY server.js ./
