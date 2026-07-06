@@ -219,15 +219,28 @@
     });
   }
 
+  // Mermaid renders the svg with width="100%" and an inline
+  // style="max-width: Npx" for in-page responsiveness. Inline styles beat any
+  // stylesheet rule, so that constrains the svg's real rendered size independent
+  // of our transform-based zoom/pan — throwing off every size calculation.
+  // Strip it and pin the svg to its intrinsic pixel size instead.
+  function normalizeSvgSize(svg, dims) {
+    svg.removeAttribute('style');
+    svg.setAttribute('width', dims.width);
+    svg.setAttribute('height', dims.height);
+  }
+
   async function renderDiagram(code, { preserveView = false } = {}) {
     const id = 'mermaid-diagram-' + (renderCount++);
     const { svg } = await mermaid.render(id, code);
     diagramContainer.innerHTML = '<div id="diagram-viewport">' + svg + '</div>';
+    viewport = document.getElementById('diagram-viewport');
+    const svgEl = viewport.querySelector('svg');
+    if (svgEl) normalizeSvgSize(svgEl, getSvgDimensions(svgEl));
     createPanZoom();
     if (preserveView) {
       updateTransform();
     } else {
-      resetView();
       window.requestAnimationFrame(() => fitToScreen());
     }
   }
@@ -321,22 +334,33 @@
     updateTransform();
   }
 
+  // Fits the diagram for readability rather than literally "fit its width":
+  // tall/skinny diagrams (TD-style flowcharts) fit to the container's width
+  // and anchor to the top, so the reader starts at the top and pans down.
+  // Wide/short diagrams (LR-style flowcharts) fit to the container's height
+  // and anchor to the left, so the reader starts at the left and pans right.
   function fitWidth() {
     if (!viewport) return;
     const svg = viewport.querySelector('svg');
     if (!svg) return;
 
     const dims = getSvgDimensions(svg);
-    if (!dims.width) return;
+    if (!dims.width || !dims.height) return;
 
     const containerRect = diagramContainer.getBoundingClientRect();
     const availableWidth = containerRect.width;
-    const scale = Math.min(availableWidth / dims.width, 10);
+    const availableHeight = containerRect.height;
+    const isTall = dims.height >= dims.width;
+    const scale = isTall ? availableWidth / dims.width : availableHeight / dims.height;
 
     zoom = Math.max(0.05, Math.min(scale, 10));
-    // center horizontally and vertically (vertical centering may leave overflow)
-    panX = (availableWidth - dims.width * zoom) / 2;
-    panY = (containerRect.height - dims.height * zoom) / 2;
+    if (isTall) {
+      panX = (availableWidth - dims.width * zoom) / 2;
+      panY = 0;
+    } else {
+      panX = 0;
+      panY = (availableHeight - dims.height * zoom) / 2;
+    }
     updateTransform();
   }
 
