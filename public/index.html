@@ -6,11 +6,14 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <style>
   * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    margin: 0;
     display: flex;
-    height: 100vh;
+    min-height: 100%;
     color: #1a1a1a;
   }
   #sidebar {
@@ -48,18 +51,61 @@
   #file-list li.active { background: #e0ecff; font-weight: 600; }
   #main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     padding: 1.75rem 2rem;
-    overflow: auto;
+    overflow: hidden;
   }
   #diagram-title { font-size: 1.15rem; margin-bottom: 1rem; color: #333; }
+  #diagram-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  #diagram-controls button {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #111827;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  #diagram-controls button:hover {
+    background: #f3f4f6;
+  }
+  #diagram-controls span {
+    color: #555;
+    font-size: 0.95rem;
+  }
   #diagram-container {
     border: 1px solid #eee;
     border-radius: 10px;
-    padding: 1.5rem;
-    min-height: 200px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #fff;
+  }
+  #diagram-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    cursor: grab;
+    touch-action: none;
+  }
+  #diagram-viewport.grabbing {
+    cursor: grabbing;
+  }
+  #diagram-container svg {
+    display: block;
+    max-width: none;
+    max-height: none;
   }
   .empty-state, .status { color: #999; text-align: center; }
   .error-box { color: #b91c1c; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; }
@@ -72,6 +118,13 @@
   </div>
   <div id="main">
     <div id="diagram-title"></div>
+    <div id="diagram-controls">
+      <button id="zoom-out" type="button">−</button>
+      <button id="zoom-reset" type="button">100%</button>
+      <button id="zoom-in" type="button">+</button>
+      <button id="fit-screen" type="button">Fit</button>
+      <span id="zoom-label">100%</span>
+    </div>
     <div id="diagram-container">
       <div class="empty-state">Select a file from the left to view its diagram.</div>
     </div>
@@ -84,8 +137,154 @@
   const diagramContainer = document.getElementById('diagram-container');
   const diagramTitle = document.getElementById('diagram-title');
   const liveDot = document.getElementById('live-dot');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const zoomResetBtn = document.getElementById('zoom-reset');
+  const zoomInBtn = document.getElementById('zoom-in');
+  const fitScreenBtn = document.getElementById('fit-screen');
+  const zoomLabel = document.getElementById('zoom-label');
   let renderCount = 0;
   let currentFile = null;
+  let zoom = 1;
+  let panX = 0;
+  let panY = 0;
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let viewport = null;
+
+  function updateTransform() {
+    if (!viewport) return;
+    viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+  }
+
+  function centerDiagram() {
+    if (!viewport) return;
+    const svg = viewport.querySelector('svg');
+    if (!svg) return;
+    const dims = getSvgDimensions(svg);
+    const containerRect = diagramContainer.getBoundingClientRect();
+    panX = (containerRect.width - dims.width * zoom) / 2;
+    panY = (containerRect.height - dims.height * zoom) / 2;
+    updateTransform();
+  }
+
+  function resetView() {
+    zoom = 1;
+    centerDiagram();
+  }
+
+  function getSvgDimensions(svg) {
+    let width = parseFloat(svg.getAttribute('width')) || 0;
+    let height = parseFloat(svg.getAttribute('height')) || 0;
+
+    if ((!width || !height) && svg.viewBox && svg.viewBox.baseVal) {
+      width = width || svg.viewBox.baseVal.width;
+      height = height || svg.viewBox.baseVal.height;
+    }
+
+    if ((!width || !height) && typeof svg.getBBox === 'function') {
+      const bbox = svg.getBBox();
+      width = width || bbox.width;
+      height = height || bbox.height;
+    }
+
+    return {
+      width: width || 1,
+      height: height || 1,
+    };
+  }
+
+  function fitToScreen() {
+    if (!viewport) return;
+    const svg = viewport.querySelector('svg');
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    let svgWidth = rect.width;
+    let svgHeight = rect.height;
+
+    if (!svgWidth || !svgHeight) {
+      const dims = getSvgDimensions(svg);
+      svgWidth = dims.width;
+      svgHeight = dims.height;
+    }
+
+    if (!svgWidth || !svgHeight) return;
+
+    const containerRect = diagramContainer.getBoundingClientRect();
+    const availableWidth = containerRect.width;
+    const availableHeight = containerRect.height;
+    const scale = Math.min(availableWidth / svgWidth, availableHeight / svgHeight, 10);
+
+    zoom = Math.max(0.25, scale);
+    panX = (availableWidth - svgWidth * zoom) / 2;
+    panY = (availableHeight - svgHeight * zoom) / 2;
+    updateTransform();
+  }
+
+  function createPanZoom() {
+    viewport = document.getElementById('diagram-viewport');
+    if (!viewport) return;
+
+    viewport.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const delta = -Math.sign(event.deltaY) * 0.1;
+      const oldZoom = zoom;
+      zoom = Math.min(10, Math.max(0.25, zoom + delta));
+      const rect = viewport.getBoundingClientRect();
+      const offsetX = event.clientX - rect.left;
+      const offsetY = event.clientY - rect.top;
+      panX -= (offsetX / oldZoom) * (zoom - oldZoom);
+      panY -= (offsetY / oldZoom) * (zoom - oldZoom);
+      updateTransform();
+    }, { passive: false });
+
+    viewport.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      isDragging = true;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      viewport.classList.add('grabbing');
+      viewport.setPointerCapture(event.pointerId);
+    });
+
+    viewport.addEventListener('pointermove', (event) => {
+      if (!isDragging) return;
+      const dx = event.clientX - dragStartX;
+      const dy = event.clientY - dragStartY;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      panX += dx;
+      panY += dy;
+      updateTransform();
+    });
+
+    viewport.addEventListener('pointerup', (event) => {
+      isDragging = false;
+      viewport.classList.remove('grabbing');
+      viewport.releasePointerCapture(event.pointerId);
+    });
+
+    viewport.addEventListener('pointerleave', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      viewport.classList.remove('grabbing');
+    });
+  }
+
+  zoomOutBtn.addEventListener('click', () => {
+    zoom = Math.max(0.25, zoom - 0.1);
+    updateTransform();
+  });
+
+  zoomInBtn.addEventListener('click', () => {
+    zoom = Math.min(10, zoom + 0.1);
+    updateTransform();
+  });
+
+  zoomResetBtn.addEventListener('click', resetView);
+  fitScreenBtn.addEventListener('click', fitToScreen);
 
   async function loadFileList() {
     try {
@@ -97,8 +296,10 @@
         return;
       }
       files.forEach(name => {
+        const displayName = name.replace(/\.mmd$/i, '');
         const li = document.createElement('li');
-        li.textContent = name;
+        li.textContent = displayName;
+        li.dataset.file = name;
         if (name === currentFile) li.classList.add('active');
         li.addEventListener('click', () => selectFile(name, li));
         fileListEl.appendChild(li);
@@ -122,11 +323,18 @@
 
       const id = 'mermaid-diagram-' + (renderCount++);
       const { svg } = await mermaid.render(id, code);
-      diagramContainer.innerHTML = svg;
+      diagramContainer.innerHTML = '<div id="diagram-viewport">' + svg + '</div>';
+      resetView();
+      createPanZoom();
+      setTimeout(fitToScreen, 0);
     } catch (err) {
       diagramContainer.innerHTML = '<pre class="error-box">Error rendering diagram:\n' + err.message + '</pre>';
     }
   }
+
+  window.addEventListener('resize', () => {
+    fitToScreen();
+  });
 
   // Live refresh: server pushes an event whenever the diagrams folder changes
   // (new files added, git pull brought in updates, etc.)
@@ -141,7 +349,7 @@
       await loadFileList();
       if (currentFile) {
         // re-render current diagram in case it was the one that changed
-        const activeLi = [...fileListEl.children].find(li => li.textContent === currentFile);
+        const activeLi = [...fileListEl.children].find(li => li.dataset.file === currentFile);
         selectFile(currentFile, activeLi);
       }
     });
