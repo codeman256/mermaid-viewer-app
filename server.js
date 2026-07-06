@@ -42,6 +42,15 @@ const DIAGRAMS_DIR = path.join(REPO_DIR, DIAGRAMS_SUBDIR);
 // How often to run `git pull`, in milliseconds. Default: 5 minutes.
 const PULL_INTERVAL_MS = parseInt(process.env.GIT_PULL_INTERVAL_MS || '300000', 10);
 
+// Optional: the externally-visible base URL, only needed if you sit this app
+// behind a reverse proxy under a *different* hostname than the one Node sees,
+// and want the Share button to always emit that canonical hostname regardless
+// of which internal address was actually used to reach it. Not required for
+// correctness — deep-links and in-diagram `click ... href "?file=..."` links
+// are relative and already resolve correctly against whatever hostname the
+// browser is actually on. e.g. "https://diagrams.example.com".
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+
 // ---------------- Bootstrap: clone repo if it doesn't exist yet ----------------
 const isGitRepo = fs.existsSync(path.join(REPO_DIR, '.git'));
 
@@ -153,6 +162,8 @@ app.get('/api/file', (req, res) => {
 
 // Simple health check — handy for Docker HEALTHCHECK / uptime monitors
 app.get('/healthz', (req, res) => res.send('ok'));
+
+app.get('/api/config', (req, res) => res.json({ publicBaseUrl: PUBLIC_BASE_URL }));
 
 // ---------------- Watch folder, notify connected browsers ----------------
 // Debounced so a `git pull` touching many files at once results in a single

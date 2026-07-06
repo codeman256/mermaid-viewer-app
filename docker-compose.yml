@@ -13,17 +13,25 @@ services:
       # this entirely if your reverse proxy talks to the Docker network directly.
       - "3000:3000"
 
+    # Real values live in a local, gitignored `.env` file (see `.env.example`
+    # for the variables this compose file expects) so nobody's actual repo
+    # URL/hostname ends up committed here.
     environment:
       # Auto-clone this on first run if diagrams-repo is empty.
       # Use an HTTPS URL with a token for private repos (see README below),
       # or an SSH URL if you mount your SSH key (see volumes below).
-      GIT_REPO_URL: "https://github.com/codeman256/Mermaid-Diagrams.git"
+      GIT_REPO_URL: "${GIT_REPO_URL}"
 
       # Where inside the repo the .mmd files live. "." = repo root.
-      DIAGRAMS_SUBDIR: "diagrams"
+      DIAGRAMS_SUBDIR: "${DIAGRAMS_SUBDIR:-diagrams}"
 
       # How often to auto git-pull, in milliseconds. 300000 = 5 minutes.
-      GIT_PULL_INTERVAL_MS: "300000"
+      GIT_PULL_INTERVAL_MS: "${GIT_PULL_INTERVAL_MS:-300000}"
+
+      # Optional — only set this if the app sits behind a reverse proxy under
+      # a different public hostname; see server.js for details. Leave unset
+      # otherwise (Share already works correctly without it).
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
 
     # volumes:
       # Persists the cloned repo across container restarts/rebuilds so it
