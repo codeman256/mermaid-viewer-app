@@ -5,203 +5,8 @@
 <meta charset="UTF-8">
 <title>Mermaid Diagram Viewer</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-<style>
-  :root {
-    color-scheme: light;
-    --bg: #eef2ff;
-    --surface: #ffffff;
-    --surface-strong: #f8fafc;
-    --border: #d1d5db;
-    --text: #0f172a;
-    --muted: #475569;
-    --accent: #4338ca;
-    --accent-soft: rgba(67,56,202,0.14);
-    --shadow: 0 24px 80px rgba(15,23,42,0.08);
-  }
-  html.dark {
-    color-scheme: dark;
-    --bg: #020617;
-    --surface: #07132b;
-    --surface-strong: #0f172a;
-    --border: #334155;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --accent: #8b5cf6;
-    --accent-soft: rgba(139,92,246,0.18);
-    --shadow: 0 24px 80px rgba(0,0,0,0.4);
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-  body {
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    display: flex;
-    min-height: 100%;
-    color: var(--text);
-    background: radial-gradient(circle at top left, rgba(139,92,246,0.12), transparent 24%), var(--bg);
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-  #sidebar {
-    width: 300px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 1.5rem 1.25rem;
-    background: var(--surface);
-    box-shadow: inset -1px 0 0 rgba(255,255,255,0.05);
-  }
-  #sidebar h2 {
-    font-size: 0.92rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    margin: 0 0 1rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  #live-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #64748b;
-    display: inline-block;
-    box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
-  }
-  #live-dot.connected { background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.14); }
-  #file-search-wrap {
-    position: relative;
-    margin-bottom: 0.85rem;
-  }
-  #file-search {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0.55rem 2rem 0.55rem 0.8rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--border);
-    background: var(--surface-strong);
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-  #file-search:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  /* Hide native WebKit/Chromium "x" clear button — we render our own so it's consistent cross-browser */
-  #file-search::-webkit-search-cancel-button { display: none; }
-  #file-search-clear {
-    position: absolute;
-    right: 0.4rem;
-    top: 50%;
-    transform: translateY(-50%);
-    border: none;
-    background: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    padding: 0.25rem 0.4rem;
-    border-radius: 999px;
-  }
-  #file-search-clear:hover { background: var(--accent-soft); color: var(--text); }
-  #file-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
-  #file-list li.hidden { display: none; }
-  #file-list li {
-    padding: 0.8rem 0.95rem;
-    cursor: pointer;
-    border-radius: 0.85rem;
-    font-size: 0.94rem;
-    word-break: break-word;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text);
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  }
-  #file-list li:hover { background: var(--surface-strong); border-color: var(--accent-soft); }
-  #file-list li.active { background: var(--accent-soft); border-color: rgba(67,56,202,0.24); font-weight: 600; }
-  #main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 1.75rem 2rem;
-    overflow: hidden;
-  }
-  #diagram-title { font-size: 1.3rem; margin-bottom: 1rem; color: var(--text); }
-  #diagram-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.9rem;
-  }
-  #diagram-controls button {
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--text);
-    padding: 0.65rem 0.95rem;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-  }
-  #diagram-controls button:hover {
-    transform: translateY(-1px);
-    background: var(--surface-strong);
-    border-color: var(--accent-soft);
-  }
-  .theme-toggle-top {
-    position: absolute;
-    top: 1rem;
-    right: 2rem;
-    z-index: 40;
-    border-radius: 999px;
-    padding: 0.45rem 0.65rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  }
-  #diagram-controls span {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-left: auto;
-  }
-  #diagram-container {
-    border: 1px solid var(--border);
-    border-radius: 1.25rem;
-    position: relative;
-    overflow: hidden;
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    box-shadow: var(--shadow);
-  }
-  #diagram-viewport {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform-origin: 0 0;
-    cursor: grab;
-    touch-action: none;
-  }
-  #diagram-viewport.grabbing {
-    cursor: grabbing;
-  }
-  #diagram-container svg {
-    display: block;
-    max-width: none;
-    max-height: none;
-  }
-  .empty-state, .status { color: #999; text-align: center; }
-  .error-box { color: #b91c1c; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; }
-</style>
 </head>
 <body>
   <div id="sidebar">
@@ -257,6 +62,12 @@
   let pointerDownX = 0;
   let pointerDownY = 0;
   let fileFilterQuery = '';
+  // Whether /api/* is reachable. Set by the first loadFileList() call: true
+  // when running under server.js (Option A), false when served as plain
+  // static files with no backend (Option B) — same HTML/JS either way, this
+  // just decides whether to hit /api/list+/api/file or manifest.json+/diagrams.
+  let apiAvailable = true;
+  const STATIC_POLL_INTERVAL_MS = 15000;
   const fileSearchInput = document.getElementById('file-search');
   const fileSearchClearBtn = document.getElementById('file-search-clear');
   const shareBtn = document.getElementById('share-btn');
@@ -305,6 +116,57 @@
 
   function isLight({ r, g, b }) {
     return (r * 299 + g * 587 + b * 114) / 1000 >= LIGHT_FILL_LUMA_THRESHOLD;
+  }
+
+  // Client-side mirror of lib/diagrams.js's decodeDiagramBuffer — only used
+  // in static mode (Option B), where there's no server to decode the file's
+  // encoding for us and we fetch the raw .mmd bytes directly.
+  function decodeDiagramBuffer(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+      return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+    }
+    if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+      return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+    }
+    if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+      return new TextDecoder('utf-8').decode(bytes.subarray(3));
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  // Fetches the diagram list. Tries the dynamic API first (Option A); if
+  // that route doesn't exist (plain static hosting, Option B) falls back to
+  // the pre-generated manifest.json sitting next to this page.
+  async function fetchFileList() {
+    try {
+      const res = await fetch('/api/list');
+      if (res.ok) {
+        apiAvailable = true;
+        return await res.json();
+      }
+    } catch {
+      // fall through to static fallback
+    }
+    apiAvailable = false;
+    const res = await fetch('manifest.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Could not load file list');
+    return await res.json();
+  }
+
+  // Fetches one diagram's source. In API mode the server has already decoded
+  // its encoding for us; in static mode we fetch the raw bytes from
+  // /diagrams/<name> and decode client-side.
+  async function fetchDiagramSource(name) {
+    if (apiAvailable) {
+      const res = await fetch('/api/file?path=' + encodeURIComponent(name));
+      if (!res.ok) throw new Error('File not found on server');
+      return await res.text();
+    }
+    const staticPath = 'diagrams/' + name.split('/').map(encodeURIComponent).join('/');
+    const res = await fetch(staticPath);
+    if (!res.ok) throw new Error('File not found');
+    return decodeDiagramBuffer(await res.arrayBuffer());
   }
 
   function fixDarkModeNodeContrast(svgEl) {
@@ -655,8 +517,7 @@
 
   async function loadFileList() {
     try {
-      const res = await fetch('/api/list');
-      const files = await res.json();
+      const files = await fetchFileList();
       fileListEl.innerHTML = '';
       if (files.length === 0) {
         fileListEl.innerHTML = '<li class="status">No .mmd files found</li>';
@@ -712,9 +573,7 @@
     diagramContainer.innerHTML = '<div class="status">Loading…</div>';
 
     try {
-      const res = await fetch('/api/file?path=' + encodeURIComponent(name));
-      if (!res.ok) throw new Error('File not found on server');
-      const code = await res.text();
+      const code = await fetchDiagramSource(name);
       currentCode = code;
       await renderDiagram(code);
       history.pushState(null, '', '?file=' + encodeURI(name));
@@ -730,23 +589,56 @@
     fitToScreen();
   });
 
-  // Live refresh: server pushes an event whenever the diagrams folder changes
-  // (new files added, git pull brought in updates, etc.)
-  function connectLiveUpdates() {
+  async function handleFilesPossiblyChanged() {
+    await loadFileList();
+    if (currentFile) {
+      // re-render current diagram in case it was the one that changed
+      const activeLi = [...fileListEl.children].find(li => li.dataset.file === currentFile);
+      selectFile(currentFile, activeLi);
+    }
+  }
+
+  // Live refresh, API mode: server pushes an event whenever the diagrams
+  // folder changes (new files added, git pull brought in updates, etc.)
+  function connectLiveUpdatesViaSse() {
     const es = new EventSource('/api/events');
     es.onopen = () => liveDot.classList.add('connected');
     es.onerror = () => {
       liveDot.classList.remove('connected');
       // browser auto-reconnects EventSource; nothing else to do
     };
-    es.addEventListener('files-changed', async () => {
-      await loadFileList();
-      if (currentFile) {
-        // re-render current diagram in case it was the one that changed
-        const activeLi = [...fileListEl.children].find(li => li.dataset.file === currentFile);
-        selectFile(currentFile, activeLi);
+    es.addEventListener('files-changed', handleFilesPossiblyChanged);
+  }
+
+  // Live refresh, static mode: there's no server process to push anything,
+  // so instead poll manifest.json on an interval and compare it against what
+  // we last saw. Less immediate than SSE, but plenty for a diagram viewer.
+  function connectLiveUpdatesViaPolling() {
+    let lastManifestRaw = null;
+    liveDot.classList.add('connected');
+    setInterval(async () => {
+      try {
+        const res = await fetch('manifest.json', { cache: 'no-store' });
+        if (!res.ok) return;
+        const raw = await res.text();
+        if (lastManifestRaw !== null && raw !== lastManifestRaw) {
+          lastManifestRaw = raw;
+          await handleFilesPossiblyChanged();
+        } else {
+          lastManifestRaw = raw;
+        }
+      } catch {
+        // transient fetch failure — just try again next interval
       }
-    });
+    }, STATIC_POLL_INTERVAL_MS);
+  }
+
+  function connectLiveUpdates() {
+    if (apiAvailable) {
+      connectLiveUpdatesViaSse();
+    } else {
+      connectLiveUpdatesViaPolling();
+    }
   }
 
   window.addEventListener('popstate', () => {
@@ -763,8 +655,10 @@
       const li = [...fileListEl.children].find(el => el.dataset.file === initialTarget);
       if (li) selectFile(initialTarget, li);
     }
+    // Only run after loadFileList() has determined apiAvailable, so live
+    // refresh picks the right mode (SSE vs. manifest polling) from the start.
+    connectLiveUpdates();
   })();
-  connectLiveUpdates();
 </script>
 </body>
 </html>

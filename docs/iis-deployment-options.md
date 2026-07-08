@@ -2,9 +2,10 @@
 
 **Purpose of this doc:** compare two ways to host this app on our IIS server, for a non-technical audience deciding what to approve installing. TL;DR up front, details below.
 
+> **Status:** Both options are now implemented in this repo from the same codebase — nothing hypothetical below. The front-end (`public/index.html`) auto-detects at runtime whether it's talking to the Option A server or running as plain static files, and falls back accordingly. See `scripts/build-static.js` for the Option B build step.
+
 ## TL;DR
 
-- **Docker is not needed either way.** It's already off the table — drop that from the conversation entirely.
 - **The app cannot run "as-is" with zero installs.** Someone with admin rights on the server needs to install **Node.js** and **iisnode** at minimum, one time, before this app will serve a single page. Just copying the files into a folder does nothing on its own — IIS will error out looking for a module that isn't there.
 - **Recommendation: approve Node.js + iisnode + Git.** This keeps the app self-updating from our source repo automatically (every few minutes), instead of a person logging into the server and manually copying files — potentially multiple times a day if diagrams change often. That manual-copy alternative (Option B below) is a real fallback if IT won't approve installs, but it trades an ongoing task for a one-time install.
 
@@ -45,8 +46,22 @@
 
 **Risks / costs:**
 - **Someone (or something) still has to get new diagram files onto the server.** Since there's no Git and no automated process running there, updates become a manual copy step (or a scheduled copy job run from a *different* machine that still has Git) — which is exactly the "logging in and dropping files, possibly multiple times a day" workload we're trying to avoid.
-- Auto-refresh becomes "check every 10–30 seconds" instead of instant push — a minor, not major, downgrade for this use case.
-- Requires a one-time rework of the app (small, but real development work and testing) to remove the server-side pieces and replace them with the static equivalents.
+- Auto-refresh becomes "check every 15 seconds" instead of instant push — a minor, not major, downgrade for this use case.
+
+### How to build and deploy Option B
+
+On any machine that still has Node.js and this repo checked out (a dev box, not the server):
+
+```
+npm run build:static
+```
+
+This writes a self-contained `dist-static/` folder: the front-end files, every
+`.mmd` diagram copied in under `diagrams/`, a generated `manifest.json` (the
+static stand-in for `/api/list`), and a minimal `web.config` that only
+registers `.mmd` as a static MIME type — no iisnode, no URL Rewrite module.
+Copy everything inside `dist-static/` into the IIS site's physical path and
+it's live. Re-run the command and re-copy whenever diagrams change.
 
 ## Recommendation
 
