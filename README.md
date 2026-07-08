@@ -74,10 +74,16 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
   unnoticed.
 - [ ] File filtering (`#file-search`) is a plain substring match — fine for now,
   but would benefit from fuzzy matching once the diagram list gets large.
-- [ ] No automated tests exist for `server.js` (path-traversal guard, encoding
+- [x] No automated tests exist for `server.js` (path-traversal guard, encoding
   detection, `.mmd` listing) or the front-end — worth at least covering the
   path-traversal check in `/api/file` given it's the one real security
   boundary in this app.
+  - (Path-traversal guard, `.mmd` listing, and encoding detection now covered
+  in `test/diagrams.test.js` via `npm test` — logic extracted into
+  `lib/diagrams.js` to make it testable without booting Express/git/chokidar.
+  Also fixed a real bug found while writing the encoding tests: the UTF-16 BE
+  branch used `buffer.toString('utf16be', ...)`, which isn't a real Node
+  Buffer encoding and threw instead of decoding. Front-end still untested.)
 - [ ] Consider remembering the last-viewed file per browser (`localStorage`) so
   reloading the app without a `?file=` query param returns to the last
   diagram instead of the empty state.
