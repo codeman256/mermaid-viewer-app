@@ -222,6 +222,7 @@
       <button id="fit-screen" type="button">Fit</button>
       <button id="go-start" type="button">Go to Start</button>
       <button id="share-btn" type="button" disabled>Share</button>
+      <button id="mermaid-live-btn" type="button" disabled>Open in mermaid.live</button>
       <span id="zoom-label">100%</span>
     </div>
     <div id="diagram-container">
@@ -259,6 +260,7 @@
   const fileSearchInput = document.getElementById('file-search');
   const fileSearchClearBtn = document.getElementById('file-search-clear');
   const shareBtn = document.getElementById('share-btn');
+  const mermaidLiveBtn = document.getElementById('mermaid-live-btn');
 
   function initializeMermaidTheme(theme) {
     mermaid.initialize({
@@ -600,6 +602,35 @@
     shareResetTimer = setTimeout(() => { shareBtn.textContent = 'Share'; }, 1500);
   });
 
+  // Encodes the current diagram source as a mermaid.live editor URL. Built
+  // lazily on click (rather than kept around per-file) since the encoded
+  // state can be tens of KB for a large diagram — no reason to carry that
+  // around for every file in the list when only one link is ever used.
+  function toBase64Url(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    bytes.forEach((b) => { binary += String.fromCharCode(b); });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function buildMermaidLiveUrl(code) {
+    const state = {
+      code,
+      mermaid: JSON.stringify({ theme: 'default' }),
+      autoSync: true,
+      updateDiagram: true,
+      panZoom: true,
+      rough: false,
+      editorMode: 'code',
+    };
+    return 'https://mermaid.live/edit#base64:' + toBase64Url(JSON.stringify(state));
+  }
+
+  mermaidLiveBtn.addEventListener('click', () => {
+    if (!currentCode) return;
+    window.open(buildMermaidLiveUrl(currentCode), '_blank', 'noopener');
+  });
+
   themeToggleBtn.addEventListener('click', async () => {
     const isDark = document.documentElement.classList.toggle('dark');
     const theme = isDark ? 'dark' : 'light';
@@ -688,6 +719,7 @@
       await renderDiagram(code);
       history.pushState(null, '', '?file=' + encodeURI(name));
       shareBtn.disabled = false;
+      mermaidLiveBtn.disabled = false;
     } catch (err) {
       currentCode = null;
       diagramContainer.innerHTML = '<pre class="error-box">Error rendering diagram:\n' + err.message + '</pre>';

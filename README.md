@@ -57,3 +57,27 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
   fine with Unraid's container status indicator too.
 - This same `server.js` also runs fine outside Docker (e.g. under IIS on
   Windows) — nothing here is Docker-specific except the Dockerfile itself.
+
+## TODO
+
+- [x] The "Open in mermaid.live" button always sends `theme: 'default'` in the
+  encoded state — have it pass `'dark'` when the app is in dark mode, so the
+  diagram opens on mermaid.live matching what's currently on screen.
+- [ ] Add a "Copy raw source" button next to Share/Open-in-mermaid.live, so the
+  plain `.mmd` text can be copied without opening the file in an editor.
+- [ ] Add a download-as-SVG (or PNG) button — the rendered SVG is already sitting
+  in the DOM (`#diagram-viewport svg`), so this is mostly a Blob + `<a
+  download>` away.
+- [ ] The live-connection indicator is just a small dot (`#live-dot`) that goes
+  grey on disconnect; consider a more visible banner if the SSE connection
+  drops for an extended period, since a stale diagram could otherwise go
+  unnoticed.
+- [ ] File filtering (`#file-search`) is a plain substring match — fine for now,
+  but would benefit from fuzzy matching once the diagram list gets large.
+- [ ] No automated tests exist for `server.js` (path-traversal guard, encoding
+  detection, `.mmd` listing) or the front-end — worth at least covering the
+  path-traversal check in `/api/file` given it's the one real security
+  boundary in this app.
+- [ ] Consider remembering the last-viewed file per browser (`localStorage`) so
+  reloading the app without a `?file=` query param returns to the last
+  diagram instead of the empty state.
