@@ -170,6 +170,9 @@ export function createPanZoom() {
 
   viewport.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
+    // Without this, dragging over node/edge label text starts a native
+    // text-selection instead of (or in addition to) panning.
+    event.preventDefault();
     activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     viewport.setPointerCapture(event.pointerId);
 
