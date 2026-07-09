@@ -15,6 +15,7 @@ export function initializeMermaidTheme(theme) {
     // otherwise. We show our own error box (see selectFile/wireThemeToggle's
     // catch blocks), so tell mermaid to clean up and just throw instead.
     suppressErrorRendering: true,
+    fontfamily: 'sans-serif, verdana, "trebuchet ms", arial;',
   });
 }
 
