@@ -3,15 +3,23 @@ import { sidebarEl, sidebarToggleBtn, sidebarBackdrop } from './dom.js';
 // Off-canvas sidebar, only visible as an overlay below the mobile breakpoint
 // (see the `#sidebar` media query in styles.css) — on wider screens these
 // classes have no visual effect, so it's safe to call these unconditionally.
+//
+// The toggle button itself also slides to the open sidebar's edge and turns
+// into a "×" — left in place, it would sit right on top of the sidebar's own
+// "Diagrams" heading once the drawer slides out from under it.
 export function openSidebar() {
   sidebarEl.classList.add('open');
   sidebarBackdrop.classList.add('visible');
+  sidebarToggleBtn.classList.add('open');
+  sidebarToggleBtn.textContent = '×';
   sidebarToggleBtn.setAttribute('aria-expanded', 'true');
 }
 
 export function closeSidebar() {
   sidebarEl.classList.remove('open');
   sidebarBackdrop.classList.remove('visible');
+  sidebarToggleBtn.classList.remove('open');
+  sidebarToggleBtn.textContent = '☰';
   sidebarToggleBtn.setAttribute('aria-expanded', 'false');
 }
 

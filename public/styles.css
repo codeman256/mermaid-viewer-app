@@ -162,6 +162,7 @@ body {
   display: none;
   font-size: 1.1rem;
   line-height: 1;
+  transition: left 0.25s ease;
 }
 #sidebar-backdrop {
   display: none;
@@ -226,6 +227,10 @@ body {
     z-index: 55;
   }
   #sidebar.open { transform: translateX(0); }
+
+  #sidebar-toggle.open {
+    left: calc(min(80vw, 300px) + 0.75rem);
+  }
 
   #main {
     padding: 4.5rem 1rem 1.25rem;
