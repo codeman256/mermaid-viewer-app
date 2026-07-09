@@ -59,13 +59,12 @@ function main() {
   rmrf(OUT_DIR);
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  // Front-end: same files Option A serves from /public — the front-end code
-  // detects at runtime whether /api/* is reachable and falls back to
-  // manifest.json + static /diagrams files when it isn't.
+  // Front-end: same files Option A serves from /public (including the js/
+  // subfolder) — the front-end code detects at runtime whether /api/* is
+  // reachable and falls back to manifest.json + static /diagrams files when
+  // it isn't.
   const publicDir = path.join(ROOT, 'public');
-  for (const name of fs.readdirSync(publicDir)) {
-    copyFile(path.join(publicDir, name), path.join(OUT_DIR, name));
-  }
+  fs.cpSync(publicDir, OUT_DIR, { recursive: true });
 
   // Diagrams, flattened into the output's diagrams/ folder, preserving
   // subfolder structure so links like "?file=sub/other.mmd" keep working.

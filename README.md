@@ -13,7 +13,7 @@ port you set in `docker-compose.yml`). Since your proxy already handles auth,
 the container itself is intentionally wide open — don't expose port 3000
 directly to the internet without the proxy in front of it.
 
-## Getting your diagrams repo into the container
+## Getting your diagrams repo into the container 
 
 Two options:
 
