@@ -9,6 +9,12 @@ export function initializeMermaidTheme(theme) {
     startOnLoad: false,
     securityLevel: 'loose',
     theme: theme === 'dark' ? 'dark' : 'default',
+    // On a parse error, mermaid's default behavior renders its own "bomb"
+    // error graphic into a temporary DOM element that's only cleaned up on
+    // the success path — left behind (and stacking up on repeated errors)
+    // otherwise. We show our own error box (see selectFile/wireThemeToggle's
+    // catch blocks), so tell mermaid to clean up and just throw instead.
+    suppressErrorRendering: true,
   });
 }
 
