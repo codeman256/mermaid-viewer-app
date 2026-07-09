@@ -3,7 +3,7 @@
 ## Quick start
 
 ```bash
-git clone <this project somewhere on your Unraid box>
+git clone <this project somewhere on your computer>
 cd mermaid-viewer-docker
 docker compose up -d --build
 ```
@@ -54,7 +54,7 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
 - `./data/diagrams-repo` on the host is a bind mount, so the cloned repo
   survives container rebuilds/restarts.
 - A `/healthz` endpoint is included for Docker's `HEALTHCHECK` and works
-  fine with Unraid's container status indicator too.
+  fine with docker container status indicator too.
 - This same `server.js` also runs fine outside Docker (e.g. under IIS on
   Windows) — nothing here is Docker-specific except the Dockerfile itself.
 
