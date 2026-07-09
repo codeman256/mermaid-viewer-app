@@ -1,3 +1,6 @@
+export const sidebarEl = document.getElementById('sidebar');
+export const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+export const sidebarBackdrop = document.getElementById('sidebar-backdrop');
 export const fileListEl = document.getElementById('file-list');
 export const diagramContainer = document.getElementById('diagram-container');
 export const diagramTitle = document.getElementById('diagram-title');

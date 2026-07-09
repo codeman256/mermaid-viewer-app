@@ -7,12 +7,34 @@ import { getSvgDimensions } from './svg-utils.js';
 const ZOOM_STEP_FACTOR = 1.1; // multiplicative ~10% per step
 const TAP_MOVEMENT_THRESHOLD = 4; // px
 
+// pointerId -> last known {x, y} in client coordinates, for every pointer
+// currently pressed down on the viewport (one entry per finger while
+// touching, or the one mouse pointer while dragging).
+const activePointers = new Map();
+
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let pointerDownTarget = null;
 let pointerDownX = 0;
 let pointerDownY = 0;
+
+// True once a gesture has ever had 2+ simultaneous pointers — guards
+// tryHandleLinkTap so lifting one finger after a pinch (small movement on
+// that finger alone) doesn't get misread as a tap on whatever was underneath.
+let gestureHadMultiplePointers = false;
+let isPinching = false;
+let pinchPrevDistance = 0;
+
+function pointerDistance() {
+  const [a, b] = [...activePointers.values()];
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function pointerMidpoint() {
+  const [a, b] = [...activePointers.values()];
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
 
 // Set by main.js to whatever should happen when the reader taps an
 // in-diagram link (see tryHandleLinkTap below) — an injected callback rather
@@ -148,17 +170,44 @@ export function createPanZoom() {
 
   viewport.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
-    isDragging = true;
-    dragStartX = event.clientX;
-    dragStartY = event.clientY;
-    pointerDownTarget = event.target;
-    pointerDownX = event.clientX;
-    pointerDownY = event.clientY;
-    viewport.classList.add('grabbing');
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     viewport.setPointerCapture(event.pointerId);
+
+    if (activePointers.size === 2) {
+      // A second finger just landed — switch from single-finger pan to
+      // two-finger pinch-zoom for the rest of this gesture.
+      isDragging = false;
+      isPinching = true;
+      gestureHadMultiplePointers = true;
+      pinchPrevDistance = pointerDistance();
+    } else if (activePointers.size === 1) {
+      isDragging = true;
+      isPinching = false;
+      gestureHadMultiplePointers = false;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      pointerDownTarget = event.target;
+      pointerDownX = event.clientX;
+      pointerDownY = event.clientY;
+      viewport.classList.add('grabbing');
+    }
   });
 
   viewport.addEventListener('pointermove', (event) => {
+    if (!activePointers.has(event.pointerId)) return;
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (isPinching && activePointers.size === 2) {
+      const distance = pointerDistance();
+      const midpoint = pointerMidpoint();
+      const rect = diagramContainer.getBoundingClientRect();
+      if (pinchPrevDistance > 0) {
+        zoomAtPoint(state.zoom * (distance / pinchPrevDistance), midpoint.x - rect.left, midpoint.y - rect.top);
+      }
+      pinchPrevDistance = distance;
+      return;
+    }
+
     if (!isDragging) return;
     const dx = event.clientX - dragStartX;
     const dy = event.clientY - dragStartY;
@@ -169,19 +218,44 @@ export function createPanZoom() {
     updateTransform();
   });
 
-  viewport.addEventListener('pointerup', (event) => {
-    isDragging = false;
-    viewport.classList.remove('grabbing');
-    viewport.releasePointerCapture(event.pointerId);
-    const moved = Math.hypot(event.clientX - pointerDownX, event.clientY - pointerDownY);
-    if (moved < TAP_MOVEMENT_THRESHOLD) {
-      tryHandleLinkTap(pointerDownTarget, event);
+  function endPointer(event) {
+    if (!activePointers.has(event.pointerId)) return;
+    activePointers.delete(event.pointerId);
+    if (viewport.hasPointerCapture(event.pointerId)) {
+      viewport.releasePointerCapture(event.pointerId);
     }
-    pointerDownTarget = null;
-  });
 
-  viewport.addEventListener('pointerleave', () => {
-    if (!isDragging) return;
+    if (isPinching) {
+      if (activePointers.size < 2) isPinching = false;
+      if (activePointers.size === 1) {
+        // One finger remains down — resume single-finger panning from
+        // wherever it currently is, instead of jumping back to dragStartX/Y
+        // from before the pinch began.
+        const [remaining] = [...activePointers.values()];
+        isDragging = true;
+        dragStartX = remaining.x;
+        dragStartY = remaining.y;
+      }
+      if (activePointers.size === 0) viewport.classList.remove('grabbing');
+      return;
+    }
+
+    if (isDragging) {
+      isDragging = false;
+      viewport.classList.remove('grabbing');
+      const moved = Math.hypot(event.clientX - pointerDownX, event.clientY - pointerDownY);
+      if (moved < TAP_MOVEMENT_THRESHOLD && !gestureHadMultiplePointers) {
+        tryHandleLinkTap(pointerDownTarget, event);
+      }
+      pointerDownTarget = null;
+    }
+  }
+
+  viewport.addEventListener('pointerup', endPointer);
+  viewport.addEventListener('pointercancel', endPointer);
+
+  viewport.addEventListener('pointerleave', (event) => {
+    if (event.pointerType !== 'mouse' || !isDragging) return;
     isDragging = false;
     viewport.classList.remove('grabbing');
   });

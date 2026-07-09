@@ -3,12 +3,15 @@
 <!-- Remove class="dark" from <html> to disable dark mode -->
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mermaid Diagram Viewer</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
 <body>
+  <button id="sidebar-toggle" class="floating-btn" type="button" aria-label="Toggle diagrams menu" aria-expanded="false">☰</button>
+  <div id="sidebar-backdrop"></div>
   <div id="sidebar">
     <h2>Diagrams <span id="live-dot" title="Live connection status"></span></h2>
     <div id="file-search-wrap">
@@ -18,7 +21,7 @@
     <ul id="file-list"><li class="status">Loading…</li></ul>
   </div>
   <div id="main">
-    <button id="theme-toggle" class="theme-toggle-top" type="button" aria-pressed="false">Dark Mode</button>
+    <button id="theme-toggle" class="theme-toggle-top floating-btn" type="button" aria-pressed="false">Dark Mode</button>
     <div id="diagram-title"></div>
     <div id="diagram-controls">
       <button id="zoom-out" type="button">−</button>

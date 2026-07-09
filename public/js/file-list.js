@@ -4,6 +4,7 @@ import {
 } from './dom.js';
 import { fetchFileList, fetchDiagramSource } from './source.js';
 import { renderDiagram } from './render.js';
+import { closeSidebarOnMobile } from './sidebar.js';
 
 let fileFilterQuery = '';
 
@@ -64,6 +65,7 @@ export function wireFileSearch() {
 
 export async function selectFile(name) {
   state.currentFile = name;
+  closeSidebarOnMobile();
   fileListEl.querySelectorAll('li').forEach((el) => el.classList.remove('active'));
   const li = findFileListItem(name);
   if (li) li.classList.add('active');

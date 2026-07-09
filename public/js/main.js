@@ -6,12 +6,14 @@ import {
 } from './file-list.js';
 import { wireShareControls } from './share.js';
 import { connectLiveUpdates } from './live-updates.js';
+import { wireSidebarToggle } from './sidebar.js';
 
 setLinkTapHandler(selectFile);
 wireThemeToggle();
 wireZoomControls();
 wireFileSearch();
 wireShareControls();
+wireSidebarToggle();
 
 window.addEventListener('popstate', () => {
   const target = new URLSearchParams(location.search).get('file');
