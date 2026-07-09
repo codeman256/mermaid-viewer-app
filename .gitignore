@@ -2,3 +2,4 @@ diagrams-repo
 data
 .env
 node_modules
+dist-static
