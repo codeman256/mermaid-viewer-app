@@ -4,7 +4,9 @@
   "description": "Simple mermaid diagram viewer with live file refresh and automatic git pull",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test",
+    "build:static": "node scripts/build-static.js"
   },
   "dependencies": {
     "chokidar": "^3.6.0",

@@ -17,6 +17,7 @@ RUN if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
 
 # App code
 COPY server.js ./
+COPY lib ./lib
 COPY public ./public
 
 # Diagrams repo gets cloned in here at runtime (see GIT_REPO_URL) or bind-mount

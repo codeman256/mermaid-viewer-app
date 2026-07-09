@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const chokidar = require('chokidar');
 const { exec, execSync } = require('child_process');
+const { listMmdFiles, resolveDiagramPath, decodeDiagramBuffer } = require('./lib/diagrams');
 
 const app = express();
 
@@ -91,27 +92,6 @@ app.get('/api/events', (req, res) => {
   });
 });
 
-// Recursively find .mmd files under `dir`, returning paths relative to
-// DIAGRAMS_DIR using forward slashes (so subfolders are supported).
-function listMmdFiles(dir, base = '') {
-  let results = [];
-  let entries;
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return results;
-  }
-  for (const entry of entries) {
-    const relPath = base ? `${base}/${entry.name}` : entry.name;
-    if (entry.isDirectory()) {
-      results = results.concat(listMmdFiles(path.join(dir, entry.name), relPath));
-    } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.mmd')) {
-      results.push(relPath);
-    }
-  }
-  return results;
-}
-
 // ---------------- File listing / serving ----------------
 app.get('/api/list', (req, res) => {
   try {
@@ -122,41 +102,15 @@ app.get('/api/list', (req, res) => {
 });
 
 app.get('/api/file', (req, res) => {
-  const requested = req.query.path;
-  if (typeof requested !== 'string' || !requested.toLowerCase().endsWith('.mmd')) {
-    return res.status(400).send('Invalid file');
-  }
-  const diagramsRoot = path.resolve(DIAGRAMS_DIR);
-  const filePath = path.resolve(diagramsRoot, requested);
-  // Prevent path traversal outside DIAGRAMS_DIR (e.g. "../../secret.mmd")
-  if (filePath !== diagramsRoot && !filePath.startsWith(diagramsRoot + path.sep)) {
+  const filePath = resolveDiagramPath(DIAGRAMS_DIR, req.query.path);
+  if (!filePath) {
     return res.status(400).send('Invalid file');
   }
 
   // Read as binary buffer to detect and handle various encodings
   fs.readFile(filePath, (err, buffer) => {
     if (err) return res.status(404).send('File not found');
-    
-    let text = '';
-    
-    // Check for UTF-16 LE BOM (FF FE)
-    if (buffer[0] === 0xFF && buffer[1] === 0xFE) {
-      text = buffer.toString('utf16le', 2); // skip BOM
-    }
-    // Check for UTF-16 BE BOM (FE FF)
-    else if (buffer[0] === 0xFE && buffer[1] === 0xFF) {
-      text = buffer.toString('utf16be', 2); // skip BOM
-    }
-    // Check for UTF-8 BOM (EF BB BF)
-    else if (buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
-      text = buffer.toString('utf8', 3); // skip BOM
-    }
-    // Try UTF-8 (most common)
-    else {
-      text = buffer.toString('utf8');
-    }
-    
-    res.type('text/plain').send(text);
+    res.type('text/plain').send(decodeDiagramBuffer(buffer));
   });
 });
 
