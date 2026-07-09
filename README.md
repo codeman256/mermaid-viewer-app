@@ -13,7 +13,7 @@ port you set in `docker-compose.yml`). Since your proxy already handles auth,
 the container itself is intentionally wide open — don't expose port 3000
 directly to the internet without the proxy in front of it.
 
-## Getting your diagrams repo into the container
+## Getting your diagrams repo into the container 
 
 Two options:
 
@@ -87,3 +87,15 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
 - [ ] Consider remembering the last-viewed file per browser (`localStorage`) so
   reloading the app without a `?file=` query param returns to the last
   diagram instead of the empty state.
+- [x] Mobile support: the sidebar previously took up 300px on any screen size
+  with no way to hide it, and pan/zoom only ever tracked a single pointer, so
+  a second finger caused erratic jumps instead of pinch-zoom.
+  - Sidebar now collapses into a hamburger menu below 768px width (slides in
+    as an overlay with a tap-to-dismiss backdrop, auto-closes on selecting a
+    diagram). Pan/zoom now tracks all active pointers, so two fingers pinch-
+    zoom around their midpoint while one finger still pans as before. Also
+    added the `<meta name="viewport">` tag the app was missing entirely —
+    without it mobile browsers render at a virtual desktop width and the new
+    breakpoint never triggers. Trade-off: an in-diagram link tap right after
+    a pinch gesture may occasionally not register, to keep the gesture
+    detection simple.
