@@ -99,3 +99,18 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
     breakpoint never triggers. Trade-off: an in-diagram link tap right after
     a pinch gesture may occasionally not register, to keep the gesture
     detection simple.
+- [x] Add the ability to reskin the app with a deployment-specific company
+  style, instead of the look being hardcoded — the colours, font and even
+  the mermaid diagram's own colours were all baked into `styles.css`/
+  `theme.js` directly, with no way to customize them per deployment.
+  - The app now looks for an optional `public/brand.custom.json` at startup
+    (`brand.js`) and, if present, injects its colours as real CSS custom
+    property overrides (`--accent`, `--bg`, `--font-body`, etc. — see the
+    `:root`/`html.dark` variables in `styles.css`), loads any font URLs it
+    lists, swaps the sidebar app name/logo, and recolours the mermaid
+    diagram itself via `theme.js`'s `getMermaidThemeOverrides()`. Absent the
+    file — the default case — the app looks exactly as it always has.
+  - `public/brand.custom.json` is deliberately gitignored: it's meant to
+    hold one deployment's real colours/font/logo, which shouldn't be
+    committed to this repo. `public/brand.custom.example.json` is checked in
+    as a documented (fictional-company) template showing the exact shape.

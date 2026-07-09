@@ -7,13 +7,7 @@ import {
 import { wireShareControls } from './share.js';
 import { connectLiveUpdates } from './live-updates.js';
 import { wireSidebarToggle } from './sidebar.js';
-
-setLinkTapHandler(selectFile);
-wireThemeToggle();
-wireZoomControls();
-wireFileSearch();
-wireShareControls();
-wireSidebarToggle();
+import { loadCustomBrand } from './brand.js';
 
 window.addEventListener('popstate', () => {
   const target = new URLSearchParams(location.search).get('file');
@@ -22,6 +16,18 @@ window.addEventListener('popstate', () => {
 });
 
 (async () => {
+  // Must resolve before wireThemeToggle() below — that call synchronously
+  // triggers the first initializeMermaidTheme(), which needs any custom
+  // brand's mermaid diagram colours already loaded to take effect.
+  await loadCustomBrand();
+
+  setLinkTapHandler(selectFile);
+  wireThemeToggle();
+  wireZoomControls();
+  wireFileSearch();
+  wireShareControls();
+  wireSidebarToggle();
+
   await loadFileList();
   const initialTarget = new URLSearchParams(location.search).get('file');
   if (initialTarget && findFileListItem(initialTarget)) {

@@ -7,14 +7,16 @@
 <title>Mermaid Diagram Viewer</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
 <body>
   <button id="sidebar-toggle" class="floating-btn" type="button" aria-label="Toggle diagrams menu" aria-expanded="false">☰</button>
   <div id="sidebar-backdrop"></div>
   <div id="sidebar">
-    <h2>Diagrams <span id="live-dot" title="Live connection status"></span></h2>
+    <h2>
+      <span id="app-name-wrap"><img id="brand-logo" alt="" hidden><span id="app-name">Diagrams</span></span>
+      <span id="live-dot" title="Live connection status"></span>
+    </h2>
     <div id="file-search-wrap">
       <input type="search" id="file-search" placeholder="Filter diagrams…" aria-label="Filter diagrams">
       <button type="button" id="file-search-clear" aria-label="Clear filter" hidden>×</button>
@@ -31,7 +33,6 @@
       <button id="fit-screen" type="button">Fit</button>
       <button id="go-start" type="button">Go to Start</button>
       <button id="share-btn" type="button" disabled>Share</button>
-      <button id="mermaid-live-btn" type="button" disabled>Open in mermaid.live</button>
       <button id="mermaid-live-btn" type="button" disabled>Open in mermaid.live</button>
       <span id="zoom-label">100%</span>
     </div>

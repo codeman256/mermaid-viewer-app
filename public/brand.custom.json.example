@@ -1,0 +1,62 @@
+{
+  "appName": "Acme Corp Diagrams",
+  "logoUrl": "/brand-assets/acme-logo.svg",
+  "fontUrls": [
+    "https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap"
+  ],
+  "cssVariables": {
+    "light": {
+      "--bg": "#fdf6ec",
+      "--surface": "#ffffff",
+      "--surface-strong": "#f3e9d7",
+      "--border": "#e4d5b7",
+      "--text": "#2c2418",
+      "--muted": "#7a6a4d",
+      "--accent": "#b5651d",
+      "--accent-soft": "rgba(181, 101, 29, 0.14)",
+      "--shadow": "0 24px 80px rgba(181, 101, 29, 0.1)",
+      "--font-body": "\"Merriweather\", Georgia, serif"
+    },
+    "dark": {
+      "--bg": "#1b140b",
+      "--surface": "#241b10",
+      "--surface-strong": "#302416",
+      "--border": "#4a3a24",
+      "--text": "#f3e9d7",
+      "--muted": "#c2ac83",
+      "--accent": "#d98a3d",
+      "--accent-soft": "rgba(217, 138, 61, 0.18)",
+      "--shadow": "0 24px 80px rgba(0, 0, 0, 0.45)",
+      "--font-body": "\"Merriweather\", Georgia, serif"
+    }
+  },
+  "mermaidThemeVariables": {
+    "light": {
+      "theme": "base",
+      "themeVariables": {
+        "primaryColor": "#d98a3d",
+        "primaryTextColor": "#ffffff",
+        "primaryBorderColor": "#b5651d",
+        "lineColor": "#7a6a4d",
+        "secondaryColor": "#f3e9d7",
+        "secondaryTextColor": "#2c2418",
+        "tertiaryColor": "#fdf6ec",
+        "fontFamily": "\"Merriweather\", Georgia, serif"
+      }
+    },
+    "dark": {
+      "theme": "base",
+      "themeVariables": {
+        "primaryColor": "#d98a3d",
+        "primaryTextColor": "#1b140b",
+        "primaryBorderColor": "#f3e9d7",
+        "lineColor": "#c2ac83",
+        "secondaryColor": "#302416",
+        "secondaryTextColor": "#f3e9d7",
+        "tertiaryColor": "#241b10",
+        "background": "#1b140b",
+        "fontFamily": "\"Merriweather\", Georgia, serif"
+      }
+    }
+  }
+}

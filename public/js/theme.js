@@ -1,11 +1,14 @@
 import { state } from './state.js';
 import { themeToggleBtn, diagramContainer } from './dom.js';
 import { renderDiagram } from './render.js';
+import { getMermaidThemeOverrides } from './brand.js';
 
 const THEME_STORAGE_KEY = 'mermaid-viewer-theme';
 
 export function initializeMermaidTheme(theme) {
-  mermaid.initialize({
+  const overrides = getMermaidThemeOverrides(theme === 'dark');
+
+  const config = {
     startOnLoad: false,
     securityLevel: 'loose',
     theme: theme === 'dark' ? 'dark' : 'default',
@@ -15,8 +18,15 @@ export function initializeMermaidTheme(theme) {
     // otherwise. We show our own error box (see selectFile/wireThemeToggle's
     // catch blocks), so tell mermaid to clean up and just throw instead.
     suppressErrorRendering: true,
-    fontfamily: 'sans-serif, verdana, "trebuchet ms", arial;',
-  });
+  };
+  // An optional /brand.custom.json (see brand.js) can recolour the mermaid
+  // diagram itself, not just the app's own chrome (which it does via
+  // injected CSS custom properties).
+  if (overrides) {
+    config.theme = overrides.theme;
+    config.themeVariables = overrides.themeVariables;
+  }
+  mermaid.initialize(config);
 }
 
 export function applyTheme(theme) {
