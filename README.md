@@ -8,12 +8,18 @@ cd mermaid-viewer-docker
 docker compose up -d --build
 ```
 
+That's it — no other configuration needed. With `GIT_REPO_URL` unset, the
+app seeds itself from this repo's own bundled `example-diagrams/` on first
+run, so you get a working sidebar full of sample diagrams immediately
+instead of an empty screen. Point `GIT_REPO_URL` at your own diagrams repo
+(see below) whenever you're ready to replace them.
+
 Then point your existing reverse proxy at `http://<host>:3000` (or whatever
 port you set in `docker-compose.yml`). Since your proxy already handles auth,
 the container itself is intentionally wide open — don't expose port 3000
 directly to the internet without the proxy in front of it.
 
-## Getting your diagrams repo into the container 
+## Getting your own diagrams repo into the container
 
 Two options:
 
@@ -21,6 +27,9 @@ Two options:
 Set `GIT_REPO_URL` in `docker-compose.yml` to your repo's URL. On first
 startup, if `./data/diagrams-repo` is empty, the app clones it there
 automatically. After that, it just runs `git pull` on the interval you set.
+`example-diagrams/` in *this* repo is a reasonable starting template for how
+to structure that separate diagrams repo (flat `.mmd` files, optionally in
+subfolders).
 
 **Option B — clone it yourself once, ahead of time**
 ```bash
@@ -45,9 +54,31 @@ already a git repo and start auto-pulling.
 ## Updating the diagrams without redeploying
 
 Nothing to redeploy — just push to the repo. The container polls on its own
-schedule (`GIT_PULL_INTERVAL_MS`) and the browser refreshes live the moment
-new files show up locally, whether they arrived via git pull or were dropped
-straight into the mounted `./data/diagrams-repo` folder on the host.
+schedule (`GIT_PULL_INTERVAL_MINUTES`, default 5) and the browser refreshes
+live the moment new files show up locally, whether they arrived via git pull
+or were dropped straight into the mounted `./data/diagrams-repo` folder on
+the host.
+
+## Running with no Node at all (plain IIS / static hosting)
+
+If Node can't be installed on the target server, `npm run build:static`
+packages the whole app — front-end, diagrams, and a `manifest.json` standing
+in for the API — into a folder that any bare static file host can serve with
+nothing else installed. See `docs/iis-deployment-options.md` for the full
+comparison.
+
+`iis-static-demo/` in this repo is exactly that output, pre-built from the
+bundled `example-diagrams/` — copy its contents straight onto an IIS site (or
+run `npx serve iis-static-demo`) to see it work with zero setup. When you're
+ready to deploy your own diagrams, run `npm run build:static` again with
+`GIT_REPO_DIR` pointed at your real diagrams repo and copy *that* output
+instead — re-run and re-copy whenever the diagrams change.
+
+One easy-to-miss gotcha this generated `web.config` now handles: stock IIS
+has no built-in MIME type for `.json`, so `manifest.json` (and an optional
+`brand.custom.json`, see below) would silently 404 without an explicit
+`<mimeMap>` entry for it, even though `.mmd`/`.js`/`.css` all work fine
+out of the box.
 
 ## Notes
 
@@ -112,5 +143,31 @@ straight into the mounted `./data/diagrams-repo` folder on the host.
     file — the default case — the app looks exactly as it always has.
   - `public/brand.custom.json` is deliberately gitignored: it's meant to
     hold one deployment's real colours/font/logo, which shouldn't be
-    committed to this repo. `public/brand.custom.example.json` is checked in
+    committed to this repo. `public/brand.custom.json.example` is checked in
     as a documented (fictional-company) template showing the exact shape.
+- [x] Onboarding a fresh clone required a separate diagrams repo just to see
+  the app do anything, and getting the Option B (static/no-Node) build
+  working on a real IIS box required hand-editing the generated `web.config`
+  and `manifest.json` — the build's own output didn't actually work as-is.
+  - Bundled a set of example `.mmd` files directly in this repo
+    (`example-diagrams/`) — `server.js` and `build-static.js` both now fall
+    back to it automatically whenever no diagrams repo is configured, so a
+    completely unconfigured `docker compose up` (or `node server.js`, or
+    `npm run build:static`) shows a working demo instead of an empty sidebar
+    or a build error. It also doubles as a template for structuring your own
+    separate diagrams repo.
+  - Root-caused the actual IIS bug: the generated static `web.config` only
+    ever registered `.mmd` as a MIME type. Stock IIS has no built-in mapping
+    for `.json`, so `manifest.json` 404s there by default even though
+    `.mmd`/`.js`/`.css` all work out of the box — added the missing
+    `<mimeMap>` entry so the build's own output works unmodified.
+  - Pre-built and committed `iis-static-demo/`, the `build:static` output for
+    the bundled example diagrams, so testing the no-Node path needs zero
+    build step at all — just copy that folder onto IIS (or `npx serve` it).
+    Verified end-to-end with a real browser against plain nginx (no
+    Node/Express involved) — file listing, diagram rendering, and the
+    manifest-polling live-refresh fallback all work correctly.
+  - Also renamed `GIT_PULL_INTERVAL_MS` to `GIT_PULL_INTERVAL_MINUTES` (e.g.
+    `5` instead of `300000`) across `server.js`, `docker-compose.yml`, and
+    `.env.example` — nobody should have to do millisecond math to set a poll
+    interval.

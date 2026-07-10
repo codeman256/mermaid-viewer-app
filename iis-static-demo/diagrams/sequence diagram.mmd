@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor U as User
+    participant W as Web App
+    participant A as Auth Service
+    participant D as Database
+
+    U->>W: Enter credentials
+    W->>A: POST /login
+    A->>D: Look up user
+    D-->>A: User record
+    alt valid credentials
+        A-->>W: 200 OK + session token
+        W-->>U: Redirect to dashboard
+    else invalid credentials
+        A-->>W: 401 Unauthorized
+        W-->>U: Show error message
+    end
+
+    Note over U,D: Session token is stored in an httpOnly cookie

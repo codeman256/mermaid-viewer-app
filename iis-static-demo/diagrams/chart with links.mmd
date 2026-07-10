@@ -1,0 +1,9 @@
+graph LR
+    A[Christmas] -->|Get money| B(click to go to example.mmd)
+    B --> C{click me to go to subfolder/test.mmd}
+    C -->|One| D[Laptop]
+    C -->|Two| E[iPhone]
+    C -->|Three| F[fa:fa-car Car]
+
+    click B href "?file=example.mmd" "Open example diagram"
+    click C href "?file=subfolder/test.mmd" "Open the test diagram in the subfolder"

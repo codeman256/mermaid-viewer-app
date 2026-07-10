@@ -12,7 +12,10 @@
  *
  * Reads the same env vars as server.js (GIT_REPO_DIR, DIAGRAMS_SUBDIR) so
  * both deployment paths (Option A's server.js and this static build) point
- * at the same diagrams folder without needing separate configuration.
+ * at the same diagrams folder without needing separate configuration. If
+ * neither is configured (or the folder has no .mmd files in it), falls back
+ * to this repo's own bundled `example-diagrams/` so the build still produces
+ * something to look at instead of erroring out.
  */
 
 require('dotenv').config();
@@ -24,17 +27,22 @@ const ROOT = path.join(__dirname, '..');
 const REPO_DIR = process.env.GIT_REPO_DIR || path.join(ROOT, 'diagrams-repo');
 const DIAGRAMS_SUBDIR = process.env.DIAGRAMS_SUBDIR || '.';
 const DIAGRAMS_DIR = path.join(REPO_DIR, DIAGRAMS_SUBDIR);
+const EXAMPLE_DIAGRAMS_DIR = path.join(ROOT, 'example-diagrams');
 const OUT_DIR = process.env.STATIC_OUT_DIR || path.join(ROOT, 'dist-static');
 
 const STATIC_WEB_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <system.webServer>
     <!-- Option B (static) deployment: plain file serving only. No iisnode,
-         no URL Rewrite module, no Node.js needed on this server. This just
-         registers .mmd as a known static file type, since IIS returns 404
-         for unregistered extensions by default. -->
+         no URL Rewrite module, no Node.js needed on this server. IIS 404s
+         any file extension it doesn't already recognize. .mmd needs this
+         explicitly, and — less obviously, since .js/.css/.html already work
+         out of the box — so does .json: stock IIS has no built-in MIME
+         mapping for it, so manifest.json and brand.custom.json would 404
+         without this line. -->
     <staticContent>
       <mimeMap fileExtension=".mmd" mimeType="text/plain" />
+      <mimeMap fileExtension=".json" mimeType="application/json" />
     </staticContent>
   </system.webServer>
 </configuration>
@@ -49,12 +57,23 @@ function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
-function main() {
-  if (!fs.existsSync(DIAGRAMS_DIR)) {
-    console.error(`Diagrams folder not found: ${DIAGRAMS_DIR}`);
-    console.error('Set GIT_REPO_DIR/DIAGRAMS_SUBDIR, or clone your diagrams repo there first.');
-    process.exit(1);
+function resolveDiagramsSource() {
+  if (fs.existsSync(DIAGRAMS_DIR) && listMmdFiles(DIAGRAMS_DIR).length > 0) {
+    return DIAGRAMS_DIR;
   }
+  if (fs.existsSync(EXAMPLE_DIAGRAMS_DIR)) {
+    console.log(`No diagrams found at ${DIAGRAMS_DIR} — falling back to this repo's`);
+    console.log('bundled example-diagrams/ so the build still produces something to');
+    console.log('look at. Set GIT_REPO_DIR/DIAGRAMS_SUBDIR to use your own instead.');
+    return EXAMPLE_DIAGRAMS_DIR;
+  }
+  console.error(`Diagrams folder not found: ${DIAGRAMS_DIR}`);
+  console.error('Set GIT_REPO_DIR/DIAGRAMS_SUBDIR, or clone your diagrams repo there first.');
+  process.exit(1);
+}
+
+function main() {
+  const diagramsSource = resolveDiagramsSource();
 
   rmrf(OUT_DIR);
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -68,9 +87,9 @@ function main() {
 
   // Diagrams, flattened into the output's diagrams/ folder, preserving
   // subfolder structure so links like "?file=sub/other.mmd" keep working.
-  const files = listMmdFiles(DIAGRAMS_DIR).sort();
+  const files = listMmdFiles(diagramsSource).sort();
   for (const relPath of files) {
-    copyFile(path.join(DIAGRAMS_DIR, relPath), path.join(OUT_DIR, 'diagrams', relPath));
+    copyFile(path.join(diagramsSource, relPath), path.join(OUT_DIR, 'diagrams', relPath));
   }
 
   fs.writeFileSync(path.join(OUT_DIR, 'manifest.json'), JSON.stringify(files, null, 2));

@@ -1,0 +1,16 @@
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Processing : payment received
+    Processing --> Shipped : items packed
+    Processing --> Cancelled : out of stock
+    Shipped --> Delivered : courier confirms
+    Shipped --> Returned : customer refuses
+    Delivered --> [*]
+    Returned --> Refunded
+    Cancelled --> Refunded
+    Refunded --> [*]
+
+    note right of Processing
+        Inventory is locked while
+        an order is in this state
+    end note

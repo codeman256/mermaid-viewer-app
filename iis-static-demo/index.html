@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<!-- Remove class="dark" from <html> to disable dark mode -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mermaid Diagram Viewer</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <button id="sidebar-toggle" class="floating-btn" type="button" aria-label="Toggle diagrams menu" aria-expanded="false">☰</button>
+  <div id="sidebar-backdrop"></div>
+  <div id="sidebar">
+    <h2>
+      <span id="app-name-wrap"><img id="brand-logo" alt="" hidden><span id="app-name">Diagrams</span></span>
+      <span id="live-dot" title="Live connection status"></span>
+    </h2>
+    <div id="file-search-wrap">
+      <input type="search" id="file-search" placeholder="Filter diagrams…" aria-label="Filter diagrams">
+      <button type="button" id="file-search-clear" aria-label="Clear filter" hidden>×</button>
+    </div>
+    <ul id="file-list"><li class="status">Loading…</li></ul>
+  </div>
+  <div id="main">
+    <button id="theme-toggle" class="theme-toggle-top floating-btn" type="button" aria-pressed="false">Dark Mode</button>
+    <div id="diagram-title"></div>
+    <div id="diagram-controls">
+      <button id="zoom-out" type="button">−</button>
+      <button id="zoom-reset" type="button">100%</button>
+      <button id="zoom-in" type="button">+</button>
+      <button id="fit-screen" type="button">Fit</button>
+      <button id="go-start" type="button">Go to Start</button>
+      <button id="share-btn" type="button" disabled>Share</button>
+      <button id="mermaid-live-btn" type="button" disabled>Open in mermaid.live</button>
+      <span id="zoom-label">100%</span>
+    </div>
+    <div id="diagram-container">
+      <div class="empty-state">Select a file from the left to view its diagram.</div>
+    </div>
+  </div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>

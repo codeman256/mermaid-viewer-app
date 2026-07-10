@@ -19,6 +19,7 @@ RUN if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then \
 COPY server.js ./
 COPY lib ./lib
 COPY public ./public
+COPY example-diagrams ./example-diagrams
 
 # Diagrams repo gets cloned in here at runtime (see GIT_REPO_URL) or bind-mount
 # an already-cloned repo over this path via docker-compose.
