@@ -37,7 +37,7 @@ function buildMermaidLiveUrl(code) {
 }
 
 export function wireShareControls() {
-  fetch('/api/config')
+  fetch('api/config')
     .then((r) => r.json())
     .then((cfg) => { publicBaseUrl = cfg.publicBaseUrl || ''; })
     .catch(() => {});

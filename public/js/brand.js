@@ -1,4 +1,4 @@
-// Loads an optional, deployment-specific `/brand.custom.json` if one exists
+// Loads an optional, deployment-specific brand.custom.json if one exists
 // on disk — see brand.custom.json.example for the shape. That real file is
 // gitignored on purpose: it's meant to hold one company's actual colours,
 // font and logo, which shouldn't end up committed to this app's own repo.
@@ -64,7 +64,7 @@ export function getMermaidThemeOverrides(isDark) {
 export async function loadCustomBrand() {
   let config;
   try {
-    const res = await fetch('/brand.custom.json', { cache: 'no-store' });
+    const res = await fetch('brand.custom.json', { cache: 'no-store' });
     if (!res.ok) return;
     config = await res.json();
   } catch {

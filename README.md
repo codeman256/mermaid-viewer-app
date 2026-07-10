@@ -78,7 +78,17 @@ One easy-to-miss gotcha this generated `web.config` now handles: stock IIS
 has no built-in MIME type for `.json`, so `manifest.json` (and an optional
 `brand.custom.json`, see below) would silently 404 without an explicit
 `<mimeMap>` entry for it, even though `.mmd`/`.js`/`.css` all work fine
-out of the box.
+out of the box. It also adds a defensive Request Filtering allow-list entry
+for `.mmd`/`.json`, in case the server's own IIS hardening policy blocks
+extensions outright regardless of MIME type.
+
+**Deployed under a subfolder, not the site root** (e.g. `http://host/mermaid/`
+instead of `http://host/`)? Every asset reference in this app is a relative
+path on purpose — `styles.css`, not `/styles.css` — so the whole thing works
+unmodified at any depth. If you ever see `favicon.svg`/`styles.css`/`js/*.js`
+requests going to the wrong (site-root) URL in your browser's dev tools, that
+means something in the deployed `index.html` got changed back to an
+absolute, leading-slash path.
 
 ## Notes
 

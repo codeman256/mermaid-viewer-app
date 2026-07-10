@@ -24,7 +24,7 @@ function decodeDiagramBuffer(arrayBuffer) {
 // knows which mode it's in.
 export async function fetchFileList() {
   try {
-    const res = await fetch('/api/list');
+    const res = await fetch('api/list');
     if (res.ok) {
       state.apiAvailable = true;
       return await res.json();
@@ -43,7 +43,7 @@ export async function fetchFileList() {
 // /diagrams/<name> and decode client-side.
 export async function fetchDiagramSource(name) {
   if (state.apiAvailable) {
-    const res = await fetch('/api/file?path=' + encodeURIComponent(name));
+    const res = await fetch('api/file?path=' + encodeURIComponent(name));
     if (!res.ok) throw new Error('File not found on server');
     return await res.text();
   }

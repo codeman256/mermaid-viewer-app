@@ -6,7 +6,7 @@ const STATIC_POLL_INTERVAL_MS = 15000;
 // Live refresh, API mode: server pushes an event whenever the diagrams
 // folder changes (new files added, git pull brought in updates, etc.)
 function connectLiveUpdatesViaSse(onFilesChanged) {
-  const es = new EventSource('/api/events');
+  const es = new EventSource('api/events');
   es.onopen = () => liveDot.classList.add('connected');
   es.onerror = () => {
     liveDot.classList.remove('connected');
