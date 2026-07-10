@@ -166,9 +166,6 @@ body {
   cursor: pointer;
 }
 .floating-btn {
-  position: fixed;
-  top: 1rem;
-  z-index: 40;
   border-radius: 999px;
   padding: 0.45rem 0.65rem;
   background: var(--surface);
@@ -177,8 +174,23 @@ body {
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
-.theme-toggle-top { right: 2rem; }
+#top-actions {
+  position: fixed;
+  top: 1rem;
+  right: 2rem;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+#contact-btn {
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
 #sidebar-toggle {
+  position: fixed;
+  top: 1rem;
   left: 1rem;
   z-index: 60;
   display: none;
