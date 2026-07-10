@@ -39,9 +39,23 @@ const STATIC_WEB_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
          explicitly, and — less obviously, since .js/.css/.html already work
          out of the box — so does .json: stock IIS has no built-in MIME
          mapping for it, so manifest.json and brand.custom.json would 404
-         without this line. -->
+         without this line.
+
+         Each <remove> immediately before its <add>/<mimeMap> guards against
+         "Cannot add duplicate collection entry" — a real IIS config error
+         that fires if this extension is already registered one level up
+         (server-wide, or a parent site/application), which is common if
+         anyone has ever added it by hand via IIS Manager's GUI. <remove> is
+         a silent no-op when nothing was already there, so this is safe
+         either way. Without it, that single conflicting entry breaks parsing
+         of this whole file for the extension involved — which looks exactly
+         like "commenting this block out is the only way it works," because
+         commenting it out is what stops the conflict, not what fixes the
+         actual MIME registration. -->
     <staticContent>
+      <remove fileExtension=".mmd" />
       <mimeMap fileExtension=".mmd" mimeType="text/plain" />
+      <remove fileExtension=".json" />
       <mimeMap fileExtension=".json" mimeType="application/json" />
     </staticContent>
     <!-- Defensive: some hardened/corporate IIS installs enable Request
@@ -54,7 +68,9 @@ const STATIC_WEB_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
     <security>
       <requestFiltering>
         <fileExtensions>
+          <remove fileExtension=".mmd" />
           <add fileExtension=".mmd" allowed="true" />
+          <remove fileExtension=".json" />
           <add fileExtension=".json" allowed="true" />
         </fileExtensions>
       </requestFiltering>
