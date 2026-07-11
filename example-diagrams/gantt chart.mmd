@@ -1,0 +1,16 @@
+gantt
+    title Viewer App Release Plan
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %d
+
+    section Planning
+    Gather requirements   :done,    plan1, 2026-06-01, 5d
+    Design review         :done,    plan2, after plan1, 3d
+
+    section Build
+    Implement dark mode   :active,  build1, 2026-06-10, 7d
+    Encoding auto-detect  :         build2, after build1, 4d
+
+    section Ship
+    QA pass               :         qa1, after build2, 3d
+    Release               :milestone, rel, after qa1, 0d

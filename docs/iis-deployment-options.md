@@ -58,10 +58,29 @@ npm run build:static
 
 This writes a self-contained `dist-static/` folder: the front-end files, every
 `.mmd` diagram copied in under `diagrams/`, a generated `manifest.json` (the
-static stand-in for `/api/list`), and a minimal `web.config` that only
-registers `.mmd` as a static MIME type — no iisnode, no URL Rewrite module.
-Copy everything inside `dist-static/` into the IIS site's physical path and
-it's live. Re-run the command and re-copy whenever diagrams change.
+static stand-in for `/api/list`), and a `web.config` that registers `.mmd`
+and `.json` as static MIME types — no iisnode, no URL Rewrite module. Copy
+everything inside `dist-static/` into the IIS site's physical path and it's
+live. Re-run the command and re-copy whenever diagrams change.
+
+If no diagrams repo is configured (`GIT_REPO_DIR`/`DIAGRAMS_SUBDIR` unset or
+empty), this falls back to the example diagrams bundled with the app
+(`example-diagrams/`) so the build still produces something to look at
+rather than erroring out — useful for a quick end-to-end check of the whole
+pipeline before your real diagrams repo is ready.
+
+**Note on the `.json` MIME type:** stock IIS has no built-in mapping for
+`.json` — it 404s by default, even though `.mmd`/`.js`/`.css` all work out
+of the box. `manifest.json` (and the optional `brand.custom.json` company
+style, if you use one) depend on it, so the `web.config` this script
+generates registers it explicitly. An earlier version of this script didn't,
+which is exactly the kind of thing that looks like "IIS is just broken"
+until you know to look for it.
+
+`iis-static-demo/` at the repo root is exactly this build's output for the
+bundled example diagrams, checked in so there's a zero-build way to confirm
+Option B genuinely works before investing in your own diagrams repo — copy
+its contents onto an IIS site, or run `npx serve iis-static-demo` locally.
 
 ## Recommendation
 

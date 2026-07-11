@@ -40,8 +40,10 @@ const GIT_REPO_URL = process.env.GIT_REPO_URL || '';
 const DIAGRAMS_SUBDIR = process.env.DIAGRAMS_SUBDIR || '.';
 const DIAGRAMS_DIR = path.join(REPO_DIR, DIAGRAMS_SUBDIR);
 
-// How often to run `git pull`, in milliseconds. Default: 5 minutes.
-const PULL_INTERVAL_MS = parseInt(process.env.GIT_PULL_INTERVAL_MS || '300000', 10);
+// How often to run `git pull`, in minutes. Default: 5.
+const rawPullMinutes = parseFloat(process.env.GIT_PULL_INTERVAL_MINUTES);
+const PULL_INTERVAL_MINUTES = Number.isFinite(rawPullMinutes) && rawPullMinutes > 0 ? rawPullMinutes : 5;
+const PULL_INTERVAL_MS = PULL_INTERVAL_MINUTES * 60 * 1000;
 
 // Optional: the externally-visible base URL, only needed if you sit this app
 // behind a reverse proxy under a *different* hostname than the one Node sees,
@@ -67,6 +69,18 @@ if (!isGitRepo && GIT_REPO_URL) {
 }
 
 fs.mkdirSync(DIAGRAMS_DIR, { recursive: true });
+
+// Zero-config convenience: if nothing points at a real diagrams repo yet and
+// the folder is empty, seed it with this app's own bundled example-diagrams/
+// so `docker compose up` / `node server.js` shows something immediately
+// instead of an empty sidebar. Set GIT_REPO_URL (or bind-mount your own
+// folder over DIAGRAMS_DIR) to replace these with your real diagrams.
+const EXAMPLE_DIAGRAMS_DIR = path.join(__dirname, 'example-diagrams');
+if (!isGitRepo && !GIT_REPO_URL && fs.existsSync(EXAMPLE_DIAGRAMS_DIR) && listMmdFiles(DIAGRAMS_DIR).length === 0) {
+  fs.cpSync(EXAMPLE_DIAGRAMS_DIR, DIAGRAMS_DIR, { recursive: true });
+  console.log(`[seed] No diagrams configured — copied this app's bundled example-diagrams/ into ${DIAGRAMS_DIR}.`);
+  console.log('[seed] Set GIT_REPO_URL (or mount your own folder) to replace these with your real diagrams.');
+}
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -156,7 +170,7 @@ function pullRepo() {
 if (fs.existsSync(path.join(REPO_DIR, '.git'))) {
   pullRepo(); // run once at startup
   setInterval(pullRepo, PULL_INTERVAL_MS);
-  console.log(`[git pull] auto-pulling every ${PULL_INTERVAL_MS / 1000}s from ${REPO_DIR}`);
+  console.log(`[git pull] auto-pulling every ${PULL_INTERVAL_MINUTES}m from ${REPO_DIR}`);
 } else {
   console.warn(
     `[git pull] ${REPO_DIR} is not a git repository — skipping auto-pull.\n` +
