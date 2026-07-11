@@ -56,6 +56,21 @@ function applyIdentity(config) {
   }
 }
 
+// contactEmail overrides the app's own default contact address. Set it to
+// "" (explicitly empty, as opposed to leaving the key out entirely) to hide
+// the Contact button for a deployment that doesn't want one.
+function applyContact(config) {
+  if (config.contactEmail === undefined) return;
+  const btn = document.getElementById('contact-btn');
+  if (!btn) return;
+  if (!config.contactEmail) {
+    btn.hidden = true;
+    return;
+  }
+  const subject = config.contactSubject || 'Diagram Viewer Feedback';
+  btn.href = `mailto:${config.contactEmail}?subject=${encodeURIComponent(subject)}`;
+}
+
 export function getMermaidThemeOverrides(isDark) {
   if (!customMermaidOverrides) return null;
   return isDark ? customMermaidOverrides.dark : customMermaidOverrides.light;
@@ -74,6 +89,7 @@ export async function loadCustomBrand() {
   injectCssVariables(config.cssVariables);
   injectCustomFonts(config.fontUrls);
   applyIdentity(config);
+  applyContact(config);
   if (config.mermaidThemeVariables) {
     customMermaidOverrides = config.mermaidThemeVariables;
   }

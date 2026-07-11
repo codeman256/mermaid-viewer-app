@@ -1,6 +1,8 @@
 {
   "appName": "Acme Corp Diagrams",
   "logoUrl": "/brand-assets/acme-logo.svg",
+  "contactEmail": "diagrams-support@acme.example",
+  "contactSubject": "Acme Diagrams Feedback",
   "fontUrls": [
     "https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap"
   ],
