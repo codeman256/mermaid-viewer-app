@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "mermaidchart.vscode-mermaid-chart",
+        "ms-azuretools.vscode-containers",
+        "ms-vscode-remote.remote-containers",
+        "ecmel.vscode-html-css",
+        "anthropic.claude-code",
+        "zainchen.json"
+    ]
+}
